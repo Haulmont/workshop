@@ -1,0 +1,81 @@
+<html>
+    <head>
+        <script type="text/javascript" src="jquery-3.1.1.min.js"></script>
+        <link rel="stylesheet" href="bootstrap.min.css"/>
+    </head>
+    <body>
+        <div style="width: 300px; margin: auto;">
+            <h1>Bike Workshop</h1>
+
+            <div id="loggedInStatus" style="display: none" class="alert alert-success">
+                Logged in successfully
+            </div>
+
+            <div id="loginForm">
+                <div class="form-group">
+                    <label for="loginField">Login:</label>
+                    <input type="text" class="form-control" id="loginField">
+                </div>
+                <div class="form-group">
+                    <label for="passwordField">Password:</label>
+                    <input type="password" class="form-control" id="passwordField">
+                </div>
+                <button type="submit" class="btn btn-default" onclick="login()">Submit</button>
+            </div>
+
+            <div id="recentOrders" style="display: none">
+                <h2>
+                    Recent Orders
+                </h2>
+
+                <ul id="ordersList">
+
+                </ul>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var oauthToken = null;
+
+            function login() {
+                var userLogin = $('#loginField').val();
+                var userPassword = $('#passwordField').val();
+
+                $.post({
+                    url: 'http://localhost:8080/app/rest/v2/oauth/token',
+                    headers: {
+                        'Authorization': 'Basic Y2xpZW50OnNlY3JldA==',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    dataType: 'json',
+                    data: {grant_type: 'password', username: userLogin, password: userPassword},
+                    success: function (data) {
+                        oauthToken = data.access_token;
+
+                        $('#loggedInStatus').show();
+                        $('#loginForm').hide();
+
+                        loadRecentOrders();
+                    }
+                })
+            }
+
+            function loadRecentOrders() {
+                $.get({
+                    url: 'http://localhost:8080/app/rest/v2/entities/workshop$Order?view=_local',
+                    headers: {
+                        'Authorization': 'Bearer ' + oauthToken,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    success: function (data) {
+                        $('#recentOrders').show();
+
+                        $.each(data, function (i, order) {
+                            $('#ordersList').append("<li>" + order.description + "</li>");
+                        });
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
